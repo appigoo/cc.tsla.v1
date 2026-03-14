@@ -497,9 +497,28 @@ while True:
                 # VIX
                 vix_data = get_vix_data(selected_period, selected_interval)
                 if not vix_data.empty:
-                    data = data.merge(vix_data[["Datetime","Close","VIX Change %"]],
-                                      on="Datetime", how="left", suffixes=("","_VIX"))
+                    # 統一時間格式：去除時區、只保留日期部分（日線）或精確到分鐘（日內）
+                    if selected_interval in ["1d", "5d", "1wk", "1mo", "3mo"]:
+                        # 日線以上：只比對日期
+                        data["_merge_key"] = pd.to_datetime(data["Datetime"]).dt.tz_localize(None).dt.normalize()
+                        vix_data["_merge_key"] = pd.to_datetime(vix_data["Datetime"]).dt.tz_localize(None).dt.normalize()
+                    else:
+                        # 日內：精確到分鐘，去除時區
+                        data["_merge_key"] = pd.to_datetime(data["Datetime"]).dt.tz_localize(None).dt.floor("min")
+                        vix_data["_merge_key"] = pd.to_datetime(vix_data["Datetime"]).dt.tz_localize(None).dt.floor("min")
+                    
+                    data = data.merge(vix_data[["_merge_key","Close","VIX Change %"]],
+                                      on="_merge_key", how="left", suffixes=("","_VIX"))
                     data.rename(columns={"Close_VIX": "VIX"}, inplace=True)
+                    data.drop(columns=["_merge_key"], inplace=True)
+                    
+                    # WARN4 品質檢查
+                    vix_ok_ratio = data["VIX"].notna().mean()
+                    if vix_ok_ratio < 0.5:
+                        st.warning(f"⚠️ {ticker} VIX 資料對齊率僅 {vix_ok_ratio:.0%}，VIX 訊號暫不可靠")
+                else:
+                    data["VIX"] = np.nan
+                    data["VIX Change %"] = np.nan
                     # [WARN4] VIX 品質檢查
                     vix_ok_ratio = data["VIX"].notna().mean()
                     if vix_ok_ratio < 0.5:
