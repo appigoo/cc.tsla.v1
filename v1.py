@@ -519,13 +519,7 @@ while True:
                 else:
                     data["VIX"] = np.nan
                     data["VIX Change %"] = np.nan
-                    # [WARN4] VIX 品質檢查
-                    vix_ok_ratio = data["VIX"].notna().mean()
-                    if vix_ok_ratio < 0.5:
-                        st.warning(f"⚠️ {ticker} VIX 資料對齊率僅 {vix_ok_ratio:.0%}，可能因時區或間隔不同導致，VIX 訊號暫不可靠")
-                else:
-                    data["VIX"] = np.nan
-                    data["VIX Change %"] = np.nan
+                       
 
                 if not data["VIX"].isna().all():
                     vix_series = pd.Series(data["VIX"].values, index=data.index)
