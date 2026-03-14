@@ -509,10 +509,6 @@ while True:
                     data["VIX Change %"] = np.nan
 
                 if not data["VIX"].isna().all():
-                    data["VIX_EMA_Fast"], data["VIX_EMA_Slow"] = calculate_vix_trend(
-                        data.rename(columns={"VIX": "Close"}), VIX_EMA_FAST, VIX_EMA_SLOW)
-                    data.rename(columns={"Close_x": "Close"}, errors="ignore", inplace=True)
-                    # 重新計算（不覆蓋 Close）
                     vix_series = pd.Series(data["VIX"].values, index=data.index)
                     data["VIX_EMA_Fast"] = vix_series.ewm(span=VIX_EMA_FAST, adjust=False).mean()
                     data["VIX_EMA_Slow"] = vix_series.ewm(span=VIX_EMA_SLOW, adjust=False).mean()
